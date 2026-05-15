@@ -87,6 +87,12 @@ class TranslateApp:
         self.mode_seg.grid(row=0, column=0, sticky="w")
         self.mode_seg.set("C → E" if self._mode == "cn2en" else "E → C")
 
+        self.indicator = ctk.CTkLabel(
+            top_bar, text="●", font=ctk.CTkFont(size=14),
+            text_color="#44cc66",
+        )
+        self.indicator.grid(row=0, column=1, sticky="e", padx=(0, 8))
+
         self.settings_btn = ctk.CTkButton(
             top_bar, text="设置", width=50, height=26,
             font=ctk.CTkFont(size=11),
@@ -101,6 +107,7 @@ class TranslateApp:
         )
         self.input_text.grid(row=1, column=0, padx=16, pady=(10, 4), sticky="nsew")
         self.input_text.bind("<Control-Return>", lambda e: self._execute())
+        self.window.bind("<Escape>", lambda e: self._clear())
 
         self._input_has_placeholder = False
         self._show_placeholder()
@@ -255,6 +262,7 @@ class TranslateApp:
             return
 
         self.exec_btn.configure(state="disabled", text="执行中...")
+        self.indicator.configure(text_color="#ff4444")
         self.status_label.configure(text=STATUS_TRANSLATING[self._mode], text_color="#4499cc")
 
         thread = threading.Thread(target=self._call_api, args=(text,), daemon=True)
@@ -302,6 +310,7 @@ class TranslateApp:
         except Exception:
             pass
 
+        self.indicator.configure(text_color="#44cc66")
         self.exec_btn.configure(state="normal", text="执行 (Ctrl+Enter)")
         self.status_label.configure(text=STATUS_DONE[self._mode], text_color="#44cc66")
         self.window.after(3000, lambda: self.status_label.configure(
@@ -309,10 +318,12 @@ class TranslateApp:
         ))
 
     def _on_error(self, error_msg):
+        self.indicator.configure(text_color="#44cc66")
         self.exec_btn.configure(state="normal", text="执行 (Ctrl+Enter)")
         self.status_label.configure(text=f"失败: {error_msg}", text_color="#ff4444")
 
     def _clear(self):
+        self.indicator.configure(text_color="#44cc66")
         self._show_placeholder()
         self.output_text.configure(state="normal")
         self.output_text.delete("1.0", "end")
